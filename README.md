@@ -1,5 +1,7 @@
 # CSSE4011 Weather Station IoT Demo
-![Weather Station](misc/weather_meter.jpg)
+<div style="text-align:center;">
+  <img src="misc/weather_meter.jpg" alt="Weather Meter">
+</div>
 
 This project is an IoT demo designed for the M5Stack Core2. It focuses on measuring wind speed and wind direction using a weather station sensor, then transmitting the data to a server via HTTP.
 
@@ -12,7 +14,7 @@ This project is an IoT demo designed for the M5Stack Core2. It focuses on measur
   Reads ADC values from the wind direction sensor and converts them into degrees.
 
 - **IoT Connectivity:**  
-  Sends sensor data as a JSON payload to a remote server using HTTP POST.
+  Sends sensor data to a remote server using simple HTTP GET request.
 
 ## Requirements
 
@@ -59,18 +61,21 @@ This project is an IoT demo designed for the M5Stack Core2. It focuses on measur
 
 ## Overview
 
-- **Initialization:**  
-  - **ADC Initialization:** Sets up the ADC to read wind direction values.  
-  - **Weather Station Setup:**  
-    - Initializes the weather station module with calibration parameters.  
-    - Configures the GPIO for the wind speed sensor with an interrupt and registers a callback.  
-  - **WiFi Connection:** Connects the device to WiFi for server communication.
+### Flowchart
+<div style="text-align:center;">
+  <img src="misc/csse4011-weather-station-flowchart.png" alt="Flowchart">
+</div>
 
-- **Main Loop:**  
-  - Collects sensor data (wind speed and wind direction).  
-  - Formats the data into a JSON payload.  
-  - Connects to the remote server, sends an HTTP POST request, and processes the response.  
-  - Waits for a configured interval before repeating the cycle.
+### Message Protocol
+<div style="text-align:center;">
+  <img src="misc/csse4011-weather-station-message-protocol.png" alt="Message Protocol">
+</div>
+
+### Schematic
+<div style="text-align:center;">
+  <img src="misc/csse4011-weather-station-schematic.png" alt="Schematic">
+</div>
+
 
 ## License
 
