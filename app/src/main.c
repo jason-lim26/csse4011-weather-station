@@ -1,9 +1,9 @@
 /**
  * @file main.c
- * @brief TagoIO IoT HTTP Client demo application for weather station.
+ * @brief HTTP Client demo application for weather station.
  *
- * This application collects data from a weather station, formats it as a JSON payload,
- * and sends it to TagoIO via an HTTP client. It logs HTTP responses and sensor data.
+ * This application collects data from a weather station, and sends it to 
+ * csse4011-iot.uqcloud.net via an HTTP client. It logs HTTP responses and sensor data.
  */
 #include <zephyr/logging/log.h>
 #include <zephyr/kernel.h>
