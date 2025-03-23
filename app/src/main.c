@@ -50,7 +50,7 @@ int get_voltage(void) {
  * @brief Cycle Executive.
  *
  * Initializes the ADC and weather station, connects to Wi-Fi, and enters the main loop,
- * periodically collecting sensor data and transmitting it to TagoIO.
+ * periodically collecting sensor data and transmitting it to csse4011-iot.uqcloud.net server.
  *
  * @return Always returns 0.
  */
@@ -58,7 +58,7 @@ int main(void)
 {
     printk("Starting program\n");
 
-    /* Initialize weather station */
+    /* Initialize WiFi and weather station */
 	wifi_connect();
     weather_station_init(&ws, adc_dev, gpio_dev, GPIO_PIN);
     LOG_INF("Weather station initialised\n");

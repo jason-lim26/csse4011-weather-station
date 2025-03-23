@@ -26,7 +26,19 @@
 #else
 #define HTTP_PORT "80"
 #endif
- 
+
+/**
+ * @brief Sends an HTTP GET request with a dynamic URL.
+ *
+ * This function constructs a dynamic URL using the provided wind speed and wind direction values,
+ * resolves the server hostname, and establishes a connection (with TLS if configured). It then
+ * sends an HTTP GET request to the server with the URL parameters and closes the socket.
+ *
+ * @param wind_speed    The measured wind speed.
+ * @param wind_direction The measured wind direction.
+ *
+ * @return int Returns 0 on success, or a negative error code on failure.
+ */
 int http_get_dynamic(float wind_speed, float wind_direction)
 {
     int ret;

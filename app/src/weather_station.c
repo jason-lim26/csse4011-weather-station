@@ -132,7 +132,7 @@ void SFEWeatherMeterKit_init(SFEWeatherMeterKit *kit,
  * Begin Function
  *----------------------------------------------------------------------------
  * Configures the GPIO pin for the wind speed sensor and attaches an interrupt
- * callback using Zephyr’s GPIO API.
+ * callback.
  */
 int SFEWeatherMeterKit_begin(SFEWeatherMeterKit *kit)
 {
