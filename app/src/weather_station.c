@@ -11,23 +11,22 @@
  * Define the number of wind vane positions and the calibration ADC values.
  * Adjust these values to suit your hardware and calibration.
  */
-// Dummy ADC calibration values – replace with real values.
-#define SFE_WMK_ADC_ANGLE_0_0   0
-#define SFE_WMK_ADC_ANGLE_22_5  100
-#define SFE_WMK_ADC_ANGLE_45_0  200
-#define SFE_WMK_ADC_ANGLE_67_5  300
-#define SFE_WMK_ADC_ANGLE_90_0  400
-#define SFE_WMK_ADC_ANGLE_112_5 500
-#define SFE_WMK_ADC_ANGLE_135_0 600
-#define SFE_WMK_ADC_ANGLE_157_5 700
-#define SFE_WMK_ADC_ANGLE_180_0 800
-#define SFE_WMK_ADC_ANGLE_202_5 900
-#define SFE_WMK_ADC_ANGLE_225_0 1000
-#define SFE_WMK_ADC_ANGLE_247_5 1100
-#define SFE_WMK_ADC_ANGLE_270_0 1200
-#define SFE_WMK_ADC_ANGLE_292_5 1300
-#define SFE_WMK_ADC_ANGLE_315_0 1400
-#define SFE_WMK_ADC_ANGLE_337_5 1500
+#define SFE_WMK_ADC_ANGLE_0_0   444
+#define SFE_WMK_ADC_ANGLE_22_5  231
+#define SFE_WMK_ADC_ANGLE_45_0  263
+#define SFE_WMK_ADC_ANGLE_67_5  52
+#define SFE_WMK_ADC_ANGLE_90_0  57
+#define SFE_WMK_ADC_ANGLE_112_5 41
+#define SFE_WMK_ADC_ANGLE_135_0 107
+#define SFE_WMK_ADC_ANGLE_157_5 75
+#define SFE_WMK_ADC_ANGLE_180_0 164
+#define SFE_WMK_ADC_ANGLE_202_5 142
+#define SFE_WMK_ADC_ANGLE_225_0 358
+#define SFE_WMK_ADC_ANGLE_247_5 340
+#define SFE_WMK_ADC_ANGLE_270_0 531
+#define SFE_WMK_ADC_ANGLE_292_5 466
+#define SFE_WMK_ADC_ANGLE_315_0 500
+#define SFE_WMK_ADC_ANGLE_337_5 398 
 
 #define SFE_WMK_ADC_RESOLUTION          10  // 10-bit ADC resolution
 #define SFE_WIND_VANE_DEGREES_PER_INDEX 22.5f
@@ -56,7 +55,7 @@ static void wind_speed_callback(const struct device *dev,
 static int configure_adc_channel(SFEWeatherMeterKit *kit)
 {
     struct adc_channel_cfg channel_cfg = {
-        .gain             = ADC_GAIN_1,
+        .gain             = ADC_GAIN_1_4,
         .reference        = ADC_REF_INTERNAL,
         .acquisition_time = ADC_ACQ_TIME_DEFAULT,
         .channel_id       = kit->wind_dir_adc_channel,
@@ -199,7 +198,7 @@ void SFEWeatherMeterKit_setADCResolutionBits(SFEWeatherMeterKit *kit, uint8_t re
  */
 float SFEWeatherMeterKit_getWindDirection(SFEWeatherMeterKit *kit)
 {
-    int16_t rawADC = 0;
+    int32_t rawADC = 0;
     int16_t sample_buffer = 0;
     struct adc_sequence sequence = {
         .channels    = BIT(kit->wind_dir_adc_channel),
@@ -212,9 +211,9 @@ float SFEWeatherMeterKit_getWindDirection(SFEWeatherMeterKit *kit)
         printk("ADC read error\n");
         return -1.0f;
     }
-    rawADC = sample_buffer;
+    rawADC = (int32_t)sample_buffer;
 
-    int16_t closestDifference = 32767;
+    int16_t closestDifference = 10;
     uint8_t closestIndex = 0;
     for (uint8_t i = 0; i < WMK_NUM_ANGLES; i++) {
         int16_t diff = kit->calibrationParams.vaneADCValues[i] - rawADC;

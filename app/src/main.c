@@ -34,6 +34,18 @@ const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
 /* Global weather station instance */
 WeatherStation ws;
 
+int get_voltage(void) {
+    int32_t val_mv;
+    bool isSuccess = adc_channel_read_millivolt(&val_mv);
+    if (!isSuccess) {
+        printk(" (value in mV not available)\n");
+        return -EIO;
+    } else {
+        printk("ADC Voltage: %" PRId32 " mV\n", val_mv);
+    }
+    return 0;
+}
+
 /**
  * @brief Cycle Executive.
  *
@@ -47,9 +59,9 @@ int main(void)
     printk("Starting program\n");
 
     /* Initialize weather station */
+	wifi_connect();
     weather_station_init(&ws, adc_dev, gpio_dev, GPIO_PIN);
     LOG_INF("Weather station initialised\n");
-	wifi_connect();
 
     /* Main loop */
     while (1) {
