@@ -5,8 +5,7 @@
  */
 
  #include <zephyr/logging/log.h>
- LOG_MODULE_DECLARE(tagoio_http_post, CONFIG_TAGOIO_HTTP_POST_LOG_LEVEL);
- 
+ LOG_MODULE_REGISTER(wifi); 
  #include <zephyr/net/wifi_mgmt.h>
  
  static int connected;
@@ -50,20 +49,20 @@
  
      struct net_if *iface = net_if_get_default();
      static struct wifi_connect_req_params cnx_params = {
-         .ssid = CONFIG_TAGOIO_HTTP_WIFI_SSID,
+         .ssid = CONFIG_HTTP_WIFI_SSID,
          .ssid_length = 0,
-         .psk = CONFIG_TAGOIO_HTTP_WIFI_PSK,
+         .psk = CONFIG_HTTP_WIFI_PSK,
          .psk_length = 0,
          .channel = 0,
          .security = WIFI_SECURITY_TYPE_PSK,
      };
  
-     cnx_params.ssid_length = strlen(CONFIG_TAGOIO_HTTP_WIFI_SSID);
-     cnx_params.psk_length = strlen(CONFIG_TAGOIO_HTTP_WIFI_PSK);
+     cnx_params.ssid_length = strlen(CONFIG_HTTP_WIFI_SSID);
+     cnx_params.psk_length = strlen(CONFIG_HTTP_WIFI_PSK);
  
      connected = 0;
  
-     LOG_INF("WIFI try connecting to %s...", CONFIG_TAGOIO_HTTP_WIFI_SSID);
+     LOG_INF("WIFI try connecting to %s...", CONFIG_HTTP_WIFI_SSID);
  
      /* Let's wait few seconds to allow wifi device be on-line */
      while (nr_tries-- > 0) {

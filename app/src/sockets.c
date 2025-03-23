@@ -5,8 +5,6 @@
  */
 
  #include <zephyr/logging/log.h>
- LOG_MODULE_DECLARE(tagoio_http_post, CONFIG_TAGOIO_HTTP_POST_LOG_LEVEL);
- 
  #include <zephyr/net/net_ip.h>
  #include <zephyr/net/socket.h>
  #include <zephyr/net/socketutils.h>
@@ -14,115 +12,125 @@
  #include <zephyr/net/tls_credentials.h>
  #include <zephyr/net/http/client.h>
  
+ #if defined(CONFIG_NET_SOCKETS_SOCKOPT_TLS)
+ #include <zephyr/net/tls_credentials.h>
+ #include "ca_certificate.h"
+ #endif
+
  #include "sockets.h"
  
- #if defined(CONFIG_TAGOIO_MANUAL_SERVER)
- #define TAGOIO_SERVER CONFIG_TAGOIO_API_SERVER_IP
- #else
- #define TAGOIO_SERVER "api.tago.io"
- #endif
+#define HTTP_HOST "csse4011-iot.uqcloud.net"
+#define HTTP_PATH "/"
+#if defined(CONFIG_NET_SOCKETS_SOCKOPT_TLS)
+#define HTTP_PORT "443"
+#else
+#define HTTP_PORT "80"
+#endif
  
- #define TAGOIO_URL          "/data"
- #define HTTP_PORT           "80"
- 
- static const char *tagoio_http_headers[] = {
-     "Device-Token: " CONFIG_TAGOIO_DEVICE_TOKEN "\r\n",
-     "Content-Type: application/json\r\n",
-     "_ssl: false\r\n",
-     NULL
- };
- 
- int tagoio_connect(struct tagoio_context *ctx)
- {
-     struct addrinfo *addr;
-     struct addrinfo hints;
-     char hr_addr[INET6_ADDRSTRLEN];
-     char *port;
-     int dns_attempts = 3;
-     int ret = -1;
- 
-     memset(&hints, 0, sizeof(hints));
- 
-     hints.ai_socktype = SOCK_STREAM;
-     hints.ai_protocol = IPPROTO_TCP;
-     if (IS_ENABLED(CONFIG_NET_IPV6)) {
-         hints.ai_family = AF_INET6;
-     } else if (IS_ENABLED(CONFIG_NET_IPV4)) {
-         hints.ai_family = AF_INET;
-     }
-     port = HTTP_PORT;
- 
-     while (dns_attempts--) {
-         ret = getaddrinfo(TAGOIO_SERVER, port, &hints, &addr);
-         if (ret == 0) {
-             break;
-         }
-         k_sleep(K_SECONDS(1));
-     }
- 
-     if (ret < 0) {
-         LOG_ERR("Could not resolve dns, error: %d", ret);
-         return ret;
-     }
- 
-     LOG_DBG("%s address: %s",
-         (addr->ai_family == AF_INET ? "IPv4" : "IPv6"),
-         net_addr_ntop(addr->ai_family,
-                   &net_sin(addr->ai_addr)->sin_addr,
-                   hr_addr, sizeof(hr_addr)));
- 
-     ctx->sock = socket(hints.ai_family,
-                hints.ai_socktype,
-                hints.ai_protocol);
-     if (ctx->sock < 0) {
-         LOG_ERR("Failed to create %s HTTP socket (%d)",
-             (addr->ai_family == AF_INET ? "IPv4" : "IPv6"),
-             -errno);
- 
-         freeaddrinfo(addr);
-         return -errno;
-     }
- 
-     if (connect(ctx->sock, addr->ai_addr, addr->ai_addrlen) < 0) {
-         LOG_ERR("Cannot connect to %s remote (%d)",
-             (addr->ai_family == AF_INET ? "IPv4" : "IPv6"),
-             -errno);
- 
-         freeaddrinfo(addr);
-         return -errno;
-     }
- 
-     freeaddrinfo(addr);
- 
-     return 0;
- }
- 
- int tagoio_http_push(struct tagoio_context *ctx,
-              http_response_cb_t resp_cb)
- {
-     struct http_request req;
-     int ret;
- 
-     memset(&req, 0, sizeof(req));
- 
-     req.method		= HTTP_POST;
-     req.host		= TAGOIO_SERVER;
-     req.port		= HTTP_PORT;
-     req.url			= TAGOIO_URL;
-     req.header_fields	= tagoio_http_headers;
-     req.protocol		= "HTTP/1.1";
-     req.response		= resp_cb;
-     req.payload		= ctx->payload;
-     req.payload_len		= strlen(ctx->payload);
-     req.recv_buf		= ctx->resp;
-     req.recv_buf_len	= sizeof(ctx->resp);
- 
-     ret = http_client_req(ctx->sock, &req,
-                   CONFIG_TAGOIO_HTTP_CONN_TIMEOUT * MSEC_PER_SEC,
-                   ctx);
- 
-     close(ctx->sock);
-     ctx->sock = -1;
- 
-     return ret;
- }
+int http_get_dynamic(float wind_speed, float wind_direction)
+{
+    int ret;
+    struct addrinfo hints = {0}, *res = NULL;
+    int sock;
+
+    /* Build the dynamic URL */
+    char dynamic_path[100];
+    ret = snprintk(dynamic_path, sizeof(dynamic_path),
+                   "/add.php?stationid=4011&speed=%.2f&direction=%.2f",
+                   (double)wind_speed, (double)wind_direction);
+    if (ret <= 0 || ret >= sizeof(dynamic_path)) {
+        printk("Error: Could not build dynamic URL.\n");
+        return -1;
+    }
+
+    printk("Sending GET request to https://%s%s\n", HTTP_HOST, dynamic_path);
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    ret = getaddrinfo(HTTP_HOST, HTTP_PORT, &hints, &res);
+    if (ret != 0) {
+        printk("Error: getaddrinfo() failed (%d)\n", ret);
+        return -1;
+    }
+
+#if defined(CONFIG_NET_SOCKETS_SOCKOPT_TLS)
+    sock = socket(res->ai_family, res->ai_socktype, IPPROTO_TLS_1_2);
+#else
+    sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+#endif
+    if (sock < 0) {
+        printk("Error: socket() failed (%d)\n", sock);
+        freeaddrinfo(res);
+        return -1;
+    }
+
+#if defined(CONFIG_NET_SOCKETS_SOCKOPT_TLS)
+    {
+        sec_tag_t sec_tag_opt[] = { CA_CERTIFICATE_TAG };
+        ret = setsockopt(sock, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag_opt, sizeof(sec_tag_opt));
+        if (ret < 0) {
+            printk("Error: setsockopt TLS_SEC_TAG_LIST: %d\n", ret);
+            close(sock);
+            freeaddrinfo(res);
+            return ret;
+        }
+        ret = setsockopt(sock, SOL_TLS, TLS_HOSTNAME, HTTP_HOST, strlen(HTTP_HOST));
+        if (ret < 0) {
+            printk("Error: setsockopt TLS_HOSTNAME: %d\n", ret);
+            close(sock);
+            freeaddrinfo(res);
+            return ret;
+        }
+    }
+#endif
+
+    ret = connect(sock, res->ai_addr, res->ai_addrlen);
+    if (ret < 0) {
+        printk("Error: connect() failed (%d)\n", ret);
+        close(sock);
+        freeaddrinfo(res);
+        return ret;
+    }
+    freeaddrinfo(res);
+
+    /* Build the HTTP GET request with the dynamic URL */
+    char req_buf[512];
+    int req_len = snprintk(req_buf, sizeof(req_buf),
+                           "GET %s HTTP/1.1\r\n"
+                           "Host: %s\r\n"
+                           "Connection: close\r\n"
+                           "\r\n",
+                           dynamic_path, HTTP_HOST);
+    if (req_len <= 0 || req_len >= sizeof(req_buf)) {
+        printk("Error: Request buffer too small or snprintk error\n");
+        close(sock);
+        return -1;
+    }
+
+    ret = send(sock, req_buf, req_len, 0);
+    if (ret < 0) {
+        printk("Error: send() failed (%d)\n", ret);
+        close(sock);
+        return ret;
+    }
+
+    /* Receive and print the server response */
+    // adds latency, by-pass this for now.
+    // char response[512];
+    // while (1) {
+    //     ret = recv(sock, response, sizeof(response) - 1, 0);
+    //     if (ret < 0) {
+    //         printk("Error: recv() failed (%d)\n", ret);
+    //         break;
+    //     }
+    //     if (ret == 0) {
+    //         /* Server closed connection */
+    //         break;
+    //     }
+    //     response[ret] = '\0';
+    //     printk("%s", response);
+    // }
+    close(sock);
+    printk("\nSocket closed.\n");
+    return 0;
+}
