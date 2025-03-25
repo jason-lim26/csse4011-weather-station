@@ -1,3 +1,10 @@
+/**
+ * @file weather_station.h
+ * @brief Weather station sensor driver.
+ *
+ * Adapted from https://github.com/sparkfun/SparkFun_Weather_Meter_Kit_Arduino_Library
+ */
+
 #ifndef SFE_WEATHER_METER_KIT_H
 #define SFE_WEATHER_METER_KIT_H
 

@@ -21,7 +21,6 @@ LOG_MODULE_REGISTER(main);
 
 #include "wifi.h"
 #include "sockets.h"
-#include "simple_adc.h"
 #include "weather_station.h"
 
 #define GPIO_0   DT_NODELABEL(gpio0)
@@ -34,17 +33,6 @@ const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
 /* Global weather station instance */
 WeatherStation ws;
 
-int get_voltage(void) {
-    int32_t val_mv;
-    bool isSuccess = adc_channel_read_millivolt(&val_mv);
-    if (!isSuccess) {
-        printk(" (value in mV not available)\n");
-        return -EIO;
-    } else {
-        printk("ADC Voltage: %" PRId32 " mV\n", val_mv);
-    }
-    return 0;
-}
 
 /**
  * @brief Cycle Executive.

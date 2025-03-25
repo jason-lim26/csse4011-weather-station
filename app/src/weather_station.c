@@ -1,3 +1,10 @@
+/**
+ * @file weather_station.c
+ * @brief Weather station sensor driver.
+ *
+ * Adapted from github.com/sparkfun/SparkFun_Weather_Meter_Kit_Arduino_Library
+ */
+
 #include <weather_station.h>
 #include <zephyr/device.h>
 #include <zephyr/sys/printk.h>

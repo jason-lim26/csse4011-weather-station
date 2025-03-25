@@ -12,7 +12,6 @@ target_include_directories(app PRIVATE include)
 target_sources(app PRIVATE 
     src/wifi.c
     src/sockets.c
-    src/simple_adc.c
     src/weather_station.c
     src/main.c
 )
